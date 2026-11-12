@@ -29,6 +29,7 @@
 # ___________________________________________________
 
 from DataStructures.List import single_linked_list as lt
+from DataStructures.List import array_list as al
 from DataStructures.Map import map_linear_probing as m
 from DataStructures.Graph import digraph as G
 
@@ -136,14 +137,23 @@ def total_stops(analyzer):
     """
     Total de paradas de autobus en el grafo
     """
-    # TODO: Retorne el número de vértices del grafo
+    return G.order(analyzer['connections'])
 
 
 def total_connections(analyzer):
     """
     Total de enlaces entre las paradas
     """
-    # TODO: Retorne el número de arcos del grafo de conexiones
+    graph = analyzer['connections']
+    vertices = G.vertices(graph)
+    connections = 0
+
+    for index in range(al.size(vertices)):
+        vertex = al.get_element(vertices, index)
+        vertex_data = m.get(graph['vertices'], vertex)
+        connections += m.size(vertex_data['adjacents'])
+
+    return connections
 
 
 # Funciones para la medición de tiempos

@@ -10,7 +10,7 @@ def new_vertex(key, value):
 
     - :attr:`key`: Llave del vertice.
     - :attr:`value`: Valor del vertice.
-    - :attr:`adjacents`: Lista de :ref:`arcos<graph-edge>` adyacentes al vertice. Implementada como un mapa :ref:`map_linear_probing<map-linear-probing>`.
+    - :attr:`adjacents`: Lista de :refarcos<graph-edge>` adyacentes al vertice. Implementada como un mapa :ref:`map_linear_probing<map-linear-probing>`.
 
     :param key: Clave del vertice
     :type key: any
@@ -23,7 +23,7 @@ def new_vertex(key, value):
     .. include:: code-examples/Graph/vertex/new_vertex.rst
 
     """
-    vertex = {"key": key, "value": value, "adjacents": mp.new_map(0, 0.5)}
+    vertex = {"key": key, "value": value, "adjacents": mp.new_map(num_elements=20, load_factor=.5)}
     return vertex
 
 
