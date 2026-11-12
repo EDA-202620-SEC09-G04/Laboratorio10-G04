@@ -11,7 +11,7 @@ def new_graph(order):
         Crea un grafo dirigido vacío.
     """
     return {
-        "vertices": mp.new_map(order, 0.5),
+        "vertices": mp.new_map(max(1, order), 0.5),
         "num_edges": 0,
     }
 

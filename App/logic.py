@@ -32,12 +32,14 @@ from DataStructures.List import single_linked_list as lt
 from DataStructures.List import array_list as al
 from DataStructures.Map import map_linear_probing as m
 from DataStructures.Graph import digraph as G
+from DataStructures.Graph import dfs as DFS
 
 import csv
 import time
 import os
 
-data_dir = os.path.dirname(os.path.realpath('__file__')) + '/Data/'
+data_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Data')
 
 
 """
@@ -100,31 +102,31 @@ def load_services(analyzer, servicesfile, stopsfile):
     addRouteConnection crea conexiones entre diferentes rutas
     servidas en una misma estación.
     """
-    stopsfile = data_dir + stopsfile
-    stops_input_file = csv.DictReader(open(stopsfile, encoding="utf-8"),
-                                      delimiter=",")
+    stops_path = os.path.join(data_dir, stopsfile)
+    with open(stops_path, encoding="utf-8", newline="") as file:
+        for stop in csv.DictReader(file, delimiter=","):
+            add_stop(analyzer, stop)
 
-    for stop in stops_input_file:
-        add_stop(analyzer, stop)
-
-    servicesfile = data_dir + servicesfile
-    input_file = csv.DictReader(open(servicesfile, encoding="utf-8"),
-                                delimiter=",")
+    services_path = os.path.join(data_dir, servicesfile)
     lastservice = None
-    for service in input_file:
-        if not G.contains_vertex(analyzer['connections'], format_vertex(service)):
-            add_stop_vertex(analyzer, format_vertex(service))
-        add_route_stop(analyzer, service)
+    with open(services_path, encoding="utf-8", newline="") as file:
+        for service in csv.DictReader(file, delimiter=","):
+            vertex = format_vertex(service)
+            if not G.contains_vertex(analyzer['connections'], vertex):
+                add_stop_vertex(analyzer, vertex)
+            add_route_stop(analyzer, service)
 
-        if lastservice is not None:
-            sameservice = lastservice['ServiceNo'] == service['ServiceNo']
-            samedirection = lastservice['Direction'] == service['Direction']
-            samebusStop = lastservice['BusStopCode'] == service['BusStopCode']
-            if sameservice and samedirection and not samebusStop:
-                add_stop_connection(analyzer, lastservice, service)
+            if lastservice is not None:
+                sameservice = lastservice['ServiceNo'] == service['ServiceNo']
+                samedirection = (
+                    lastservice['Direction'] == service['Direction'])
+                samebusStop = (
+                    lastservice['BusStopCode'] == service['BusStopCode'])
+                if sameservice and samedirection and not samebusStop:
+                    add_stop_connection(analyzer, lastservice, service)
 
-        add_same_stop_connections(analyzer, service)
-        lastservice = service
+            add_same_stop_connections(analyzer, service)
+            lastservice = service
 
     return analyzer
 
@@ -222,7 +224,10 @@ def add_route_stop(analyzer, service):
     """
     stop_info = m.get(analyzer['stops'], service['BusStopCode'])
     stop_services = stop_info['services']
-    if lt.is_present(stop_services, service['ServiceNo'], lt.default_function) == -1:
+    compare_services = lambda service_1, service_2: (
+        0 if service_1 == service_2 else -1)
+    if lt.is_present(
+            stop_services, service['ServiceNo'], compare_services) == -1:
         lt.add_last(stop_services, service['ServiceNo'])
 
     return analyzer
@@ -259,17 +264,84 @@ def add_same_stop_connections(analyzer, service):
 
 def get_most_concurrent_stops(analyzer):
     """
-    Obtiene las 5 paradas más concurridas
+    Retorna hasta cinco vertices con mas arcos entrantes y salientes.
+
+    Cada elemento contiene el identificador del vertice y su grado total.
     """
-    # TODO: Obtener las 5 paradas más concurridas, es decir, con más arcos salientes
-    ...
+    graph = analyzer['connections']
+    vertices = G.vertices(graph)
+    incoming_degrees = m.new_map(
+        num_elements=max(1, al.size(vertices)), load_factor=0.5)
+
+    for index in range(al.size(vertices)):
+        origin = al.get_element(vertices, index)
+        origin_data = m.get(graph['vertices'], origin)
+        adjacent_vertices = m.key_set(origin_data['adjacents'])
+
+        for adjacent_index in range(al.size(adjacent_vertices)):
+            destination = al.get_element(adjacent_vertices, adjacent_index)
+            incoming_degree = m.get(incoming_degrees, destination)
+            if incoming_degree is None:
+                incoming_degree = 0
+            m.put(incoming_degrees, destination, incoming_degree + 1)
+
+    ranked_stops = al.new_list()
+
+    for index in range(al.size(vertices)):
+        vertex = al.get_element(vertices, index)
+        total_degree = G.degree(graph, vertex)
+        incoming_degree = m.get(incoming_degrees, vertex)
+        if incoming_degree is not None:
+            total_degree += incoming_degree
+        al.add_last(ranked_stops, (vertex, total_degree))
+
+    def sort_by_out_degree(stop1, stop2):
+        if stop1[1] != stop2[1]:
+            return stop1[1] > stop2[1]
+        return str(stop1[0]) < str(stop2[0])
+
+    al.merge_sort(ranked_stops, sort_by_out_degree)
+
+    most_concurrent = al.new_list()
+    for index in range(min(5, al.size(ranked_stops))):
+        al.add_last(most_concurrent, al.get_element(ranked_stops, index))
+
+    return most_concurrent
 
 def get_route_between_stops_dfs(analyzer, stop1, stop2):
     """
-    Obtener la ruta entre dos parada usando dfs
+    Retorna una ruta DFS entre dos paradas, o None si no existe.
+
+    Cada parada puede ser una llave de vertice o un BusStopCode.
     """
-    # TODO: Obtener la ruta entre dos parada usando dfs
-    ...
+    graph = analyzer['connections']
+
+    def vertices_for_stop(stop):
+        if G.contains_vertex(graph, stop):
+            return [stop]
+
+        matching_vertices = []
+        prefix = str(stop) + '-'
+        vertices = G.vertices(graph)
+        for index in range(al.size(vertices)):
+            vertex = al.get_element(vertices, index)
+            if isinstance(vertex, str) and vertex.startswith(prefix):
+                matching_vertices.append(vertex)
+        return matching_vertices
+
+    origin_vertices = vertices_for_stop(stop1)
+    destination_vertices = vertices_for_stop(stop2)
+    if not origin_vertices or not destination_vertices:
+        return None
+
+    for origin in origin_vertices:
+        search = DFS.dfs(graph, origin)
+        for destination in destination_vertices:
+            path = DFS.path_to(destination, search)
+            if path is not None:
+                return path
+
+    return None
 
 def get_route_between_stops_bfs(analyzer, stop1, stop2):
     """

@@ -28,6 +28,8 @@
 import sys
 import threading
 from App import logic
+from DataStructures.List import array_list as al
+from DataStructures.Stack import stack as st
 
 """
 La vista se encarga de la interacción con el usuario.
@@ -74,12 +76,39 @@ def option_one(cont):
     print('El limite de recursion actual: ' + str(sys.getrecursionlimit()))
 
 def option_two(cont):
-    # TODO: Imprimir los resultados de la opción 2
-    ...
+    most_concurrent = logic.get_most_concurrent_stops(cont)
+
+    if al.is_empty(most_concurrent):
+        print("\nNo hay paradas para mostrar.")
+        return
+
+    print("\nLas paradas más concurridas son:")
+    for index in range(al.size(most_concurrent)):
+        vertex, total_connections = al.get_element(most_concurrent, index)
+        print(
+            f"{index + 1}. {vertex}: "
+            f"{total_connections} conexiones"
+        )
 
 def option_three(cont):
-    # TODO: Imprimir los resultados de la opción 3
-    ...
+    origin = input(
+        "Ingrese el BusStopCode o la llave origen (BusStopCode-ServiceNo): "
+    ).strip()
+    destination = input(
+        "Ingrese el BusStopCode o la llave destino (BusStopCode-ServiceNo): "
+    ).strip()
+    path = logic.get_route_between_stops_dfs(cont, origin, destination)
+
+    if path is None:
+        print("\nNo se encontró una ruta entre las paradas indicadas.")
+        return
+
+    route = []
+    while not st.is_empty(path):
+        route.append(st.pop(path))
+
+    print("\nRuta encontrada:")
+    print(" -> ".join(route))
 
 def option_four(cont):
     # TODO: Imprimir los resultados de la opción 4
@@ -100,29 +129,31 @@ Menu principal
 
 
 def main():
+    cont = logic.new_analyzer()
     working = True
     while working:
         print_menu()
-        inputs = input('Seleccione una opción para continuar\n>')
+        option = input('Seleccione una opción para continuar\n>').strip()
 
-        if int(inputs[0]) == 1:
+        if option == "1":
             print("\nInicializando....")
             cont = logic.new_analyzer()
             option_one(cont)
-        elif int(inputs[0]) == 2:
+        elif option == "2":
             option_two(cont)
-        elif int(inputs[0]) == 3:
+        elif option == "3":
             option_three(cont)
-        elif int(inputs[0]) == 4:
+        elif option == "4":
             option_four(cont)
-        elif int(inputs[0]) == 5:
+        elif option == "5":
             option_five(cont)
-        elif int(inputs[0]) == 6:
+        elif option == "6":
             option_six(cont)
-        else:
+        elif option == "0":
             working = False
             print("Saliendo...")
-    sys.exit(0)
+        else:
+            print("Opción no válida. Seleccione una opción del menú.")
 
 
 if __name__ == "__main__":
