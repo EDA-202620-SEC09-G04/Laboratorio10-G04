@@ -11,7 +11,7 @@ def new_graph(order):
         Crea un grafo dirigido vacío.
     """
     return {
-        "vertices": mp.new_map(max(1, order), 0.5),
+        "vertices": mp.new_map(order, 0.5),
         "num_edges": 0,
     }
 
@@ -39,7 +39,7 @@ def add_edge(my_graph,key_u,key_v,weight=1.0):
     vertex_v = mp.get(my_graph["vertices"],key_v)
     
     if vertex_u is None or vertex_v is None:
-        raise Exception("El vertice u no existe")
+        raise Exception("Uno de los vértices no existe")
 
     arco = mp.get(vtx.get_adjacents(vertex_u),key_v)
     if arco is not None:

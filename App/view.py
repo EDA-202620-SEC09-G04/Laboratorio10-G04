@@ -111,8 +111,28 @@ def option_three(cont):
     print(" -> ".join(route))
 
 def option_four(cont):
-    # TODO: Imprimir los resultados de la opción 4
-    ...
+    if logic.total_stops(cont) == 0:
+        print("\nPrimero cargue la información de buses con la opción 1.")
+        return
+
+    origin = input(
+        "Ingrese el BusStopCode o la llave origen (BusStopCode-ServiceNo): "
+    ).strip()
+    destination = input(
+        "Ingrese el BusStopCode o la llave destino (BusStopCode-ServiceNo): "
+    ).strip()
+    path = logic.get_route_between_stops_bfs(cont, origin, destination)
+
+    if path is None:
+        print("\nNo se encontró una ruta entre las paradas indicadas.")
+        return
+
+    route = []
+    while not st.is_empty(path):
+        route.append(st.pop(path))
+
+    print("\nRuta encontrada:")
+    print(" -> ".join(route))
 
 def option_five(cont):
     # TODO: Imprimir los resultados de la opción 5

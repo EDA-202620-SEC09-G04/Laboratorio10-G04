@@ -11,7 +11,7 @@ def dfs(my_graph,source):
         Cada vertice alcanzable se agrega a un mapa con su llave y 
         como valor un diccionarion con la informacion {“marked”, “edge_from”}.
     """
-    visited_map = mp.new_map(num_elements=17,load_factor=.5)
+    visited_map = mp.new_map(num_elements=DG.order(my_graph),load_factor=.5)
     vertex_start = DG.get_vertex(my_graph["vertices"], source)
     if vertex_start is None:
         raise ValueError("El vertice de inicio no existe en el grafo")
@@ -21,11 +21,7 @@ def dfs(my_graph,source):
 
 def dfs_vertex(my_graph,vertex,visited_map):
     """
-        Funcion recursiva que permite obtener un recorrido DFS desde un vertice inicial. 
-        La funcion aplica a los vertices adyacentes del vertice inicial. 
-        Esta función es usada por la funcion depth_first_search. 
-        Cada vertice alcanzable se agrega a un mapa con su llave y 
-        como valor un diccionarion con la informacion {“marked”, “edge_from”}.
+        Recorre recursivamente los vertices alcanzables en orden DFS.
     """
     if vertex is None:
         raise ValueError("No se puede recorrer un vertice inexistente")
@@ -33,15 +29,20 @@ def dfs_vertex(my_graph,vertex,visited_map):
     neighbors = mp.key_set(vtx.get_adjacents(vertex))
     for index in range(al.size(neighbors)):
         neighbor_key = al.get_element(neighbors, index)
-        if not mp.contains(visited_map,neighbor_key):
+        if not mp.contains(visited_map, neighbor_key):
             neighbor_vertex = DG.get_vertex(
                 my_graph["vertices"], neighbor_key)
             if neighbor_vertex is None:
-                raise ValueError("Una adyacencia apunta a un vertice inexistente")
+                raise ValueError(
+                    "Una adyacencia apunta a un vertice inexistente")
 
-            info = {"marked": True, "edge_from": vtx.get_key(vertex)}
+            info = {
+                "marked": True,
+                "edge_from": vtx.get_key(vertex),
+            }
             mp.put(visited_map, neighbor_key, info)
-            dfs_vertex(my_graph, neighbor_vertex,visited_map)
+            dfs_vertex(my_graph, neighbor_vertex, visited_map)
+
     return visited_map
 
 def has_path_to(key_v,visited_map):
@@ -49,7 +50,7 @@ def has_path_to(key_v,visited_map):
         Indica si existe un camino entre el vertice source y 
         el vertice vertex a partir del mapa de recorrido.
     """
-    return mp.contains(visited_map,key_v)
+    return mp.contains(visited_map,key_v) #and mp.get(visited_map,key_v)["marked"] == True
 
 def path_to(key_v, visited_map):
     """
