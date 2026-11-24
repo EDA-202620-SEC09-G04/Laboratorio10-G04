@@ -83,4 +83,3 @@ def path_to(key_v, visited_map):
         current = vertex_info["edge_from"]
 
     return path
-
