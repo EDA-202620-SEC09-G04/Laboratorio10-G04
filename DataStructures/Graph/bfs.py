@@ -11,8 +11,8 @@ def bfs(my_graph,source):
         El mapa resultante guarda cada vertice alcanzable y su predecesor.
     
     """
-    visited_map = mp.new_map(num_elements=DG.order(my_graph),load_factor=.5)
-    vertex_start = DG.get_vertex(my_graph["vertices"], source)
+    visited_map = mp.new_map(num_elements=max(1, DG.order(my_graph)),load_factor=0.5)
+    vertex_start = DG.get_vertex(my_graph, source)
 
     if vertex_start is None:
         raise ValueError("El vertice de inicio no existe en el grafo")
@@ -43,7 +43,7 @@ def bfs_vertex(my_graph,vertex,visited_map):
             neighbor_key = al.get_element(neighbors, index)
             if not mp.contains(visited_map, neighbor_key):
                 neighbor_vertex = DG.get_vertex(
-                    my_graph["vertices"], neighbor_key)
+                    my_graph, neighbor_key)
                 if neighbor_vertex is None:
                     raise ValueError(
                         "Una adyacencia apunta a un vertice inexistente")

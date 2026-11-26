@@ -34,7 +34,7 @@ from DataStructures.Map import map_linear_probing as m
 from DataStructures.Graph import digraph as G
 from DataStructures.Graph import dfs as DFS
 from DataStructures.Graph import bfs as BFS
-
+from DataStructures.Graph import dijkstra as DIJKSTRA
 import csv
 import time
 import os
@@ -147,16 +147,7 @@ def total_connections(analyzer):
     """
     Total de enlaces entre las paradas
     """
-    graph = analyzer['connections']
-    vertices = G.vertices(graph)
-    connections = 0
-
-    for index in range(al.size(vertices)):
-        vertex = al.get_element(vertices, index)
-        vertex_data = m.get(graph['vertices'], vertex)
-        connections += m.size(vertex_data['adjacents'])
-
-    return connections
+    return G.size(analyzer['connections'])
 
 
 # Funciones para la medición de tiempos
@@ -271,13 +262,17 @@ def get_most_concurrent_stops(analyzer):
     """
     graph = analyzer['connections']
     vertices = G.vertices(graph)
+    total_vertices = al.size(vertices)
+    
+    if total_vertices == 0:
+        return al.new_list()
+    
     incoming_degrees = m.new_map(
-        num_elements=max(1, al.size(vertices)), load_factor=0.5)
+        num_elements=max(1, total_vertices), load_factor=0.5)
 
-    for index in range(al.size(vertices)):
+    for index in range(total_vertices):
         origin = al.get_element(vertices, index)
-        origin_data = m.get(graph['vertices'], origin)
-        adjacent_vertices = m.key_set(origin_data['adjacents'])
+        adjacent_vertices = G.adjacents(graph, origin)
 
         for adjacent_index in range(al.size(adjacent_vertices)):
             destination = al.get_element(adjacent_vertices, adjacent_index)
@@ -288,7 +283,7 @@ def get_most_concurrent_stops(analyzer):
 
     ranked_stops = al.new_list()
 
-    for index in range(al.size(vertices)):
+    for index in range(total_vertices):
         vertex = al.get_element(vertices, index)
         total_degree = G.degree(graph, vertex)
         incoming_degree = m.get(incoming_degrees, vertex)
@@ -309,6 +304,26 @@ def get_most_concurrent_stops(analyzer):
 
     return most_concurrent
 
+def get_vertices_for_stop(analyzer, stop): #Función auxiliar
+
+    graph = analyzer['connections']
+    result_list = al.new_list()
+    if G.contains_vertex(graph, stop):
+        al.add_last(result_list, stop)
+    else:
+        stop_info = m.get(analyzer['stops'], stop)
+        if stop_info is not None:
+            services = stop_info['services']
+            node = services['first']
+            
+            for _ in range(lt.size(services)):
+                bus = node['info']
+                vertex = str(stop) + '-' + str(bus)
+                if G.contains_vertex(graph, vertex):
+                    al.add_last(result_list, vertex)
+                node = node['next']
+    return result_list
+
 def get_route_between_stops_dfs(analyzer, stop1, stop2):
     """
     Retorna una ruta DFS entre dos paradas, o None si no existe.
@@ -316,62 +331,40 @@ def get_route_between_stops_dfs(analyzer, stop1, stop2):
     Cada parada puede ser una llave de vertice o un BusStopCode.
     """
     graph = analyzer['connections']
-
-    def vertices_for_stop(stop):
-        if G.contains_vertex(graph, stop):
-            return [stop]
-
-        matching_vertices = []
-        prefix = str(stop) + '-'
-        vertices = G.vertices(graph)
-        for index in range(al.size(vertices)):
-            vertex = al.get_element(vertices, index)
-            if isinstance(vertex, str) and vertex.startswith(prefix):
-                matching_vertices.append(vertex)
-        return matching_vertices
-
-    origin_vertices = vertices_for_stop(stop1)
-    destination_vertices = vertices_for_stop(stop2)
-    if not origin_vertices or not destination_vertices:
+    origin_vertices = get_vertices_for_stop(analyzer, stop1)
+    destination_vertices = get_vertices_for_stop(analyzer, stop2)
+    
+    if al.is_empty(origin_vertices) or al.is_empty(destination_vertices):
         return None
-
-    for origin in origin_vertices:
+    
+    for i in range(al.size(origin_vertices)):
+        origin = al.get_element(origin_vertices, i)
         search = DFS.dfs(graph, origin)
-        for destination in destination_vertices:
+        
+        for j in range(al.size(destination_vertices)):
+            destination = al.get_element(destination_vertices, j)
             path = DFS.path_to(destination, search)
             if path is not None:
                 return path
-
     return None
 
 def get_route_between_stops_bfs(analyzer, stop1, stop2):
     """
     Obtener la ruta entre dos parada usando bfs
     """
-    # TODO: Obtener la ruta entre dos parada usando bfs
     graph = analyzer['connections']
-
-    def vertices_for_stop(stop):
-        if G.contains_vertex(graph, stop):
-            return [stop]
-
-        matching_vertices = []
-        prefix = str(stop) + '-'
-        vertices = G.vertices(graph)
-        for index in range(al.size(vertices)):
-            vertex = al.get_element(vertices, index)
-            if isinstance(vertex, str) and vertex.startswith(prefix):
-                matching_vertices.append(vertex)
-        return matching_vertices
-
-    origin_vertices = vertices_for_stop(stop1)
-    destination_vertices = vertices_for_stop(stop2)
-    if not origin_vertices or not destination_vertices:
+    origin_vertices = get_vertices_for_stop(analyzer, stop1)
+    destination_vertices = get_vertices_for_stop(analyzer, stop2)
+    
+    if al.is_empty(origin_vertices) or al.is_empty(destination_vertices):
         return None
-
-    for origin in origin_vertices:
+    
+    for i in range(al.size(origin_vertices)):
+        origin = al.get_element(origin_vertices, i)
         search = BFS.bfs(graph, origin)
-        for destination in destination_vertices:
+        
+        for j in range(al.size(destination_vertices)):
+            destination = al.get_element(destination_vertices, j)
             path = BFS.path_to(destination, search)
             if path is not None:
                 return path
@@ -381,10 +374,31 @@ def get_shortest_route_between_stops(analyzer, stop1, stop2):
     """
     Obtener la ruta mínima entre dos paradas
     """
-    # TODO: Obtener la ruta mínima entre dos paradas
-    # Nota: Tenga en cuenta que el debe guardar en la llave
-    #       analyzer['paths'] el resultado del algoritmo de Dijkstra
-    ...
+    graph = analyzer['connections']
+    origin_vertices = get_vertices_for_stop(analyzer, stop1)
+    destination_vertices = get_vertices_for_stop(analyzer, stop2)
+    
+    if al.is_empty(origin_vertices) or al.is_empty(destination_vertices):
+        return None
+    
+    best_path = None
+    min_distance = float("inf")
+    best_structure = None
+    
+    for i in range(al.size(origin_vertices)):
+        origin = al.get_element(origin_vertices, i)
+        search_structure = DIJKSTRA.dijkstra(graph, origin)
+        
+        for j in range(al.size(destination_vertices)):
+            destination = al.get_element(destination_vertices, j)
+            distance = DIJKSTRA.dist_to(destination, search_structure)
+            if distance < min_distance:
+                min_distance = distance
+                best_path = DIJKSTRA.path_to(destination, search_structure)
+                best_structure = search_structure
+                
+    analyzer['paths'] = best_structure
+    return best_path
 
 def show_calculated_shortest_route(analyzer, destination_stop):
     # (Opcional) TODO: Mostrar en un mapa la ruta mínima entre dos paradas usando folium

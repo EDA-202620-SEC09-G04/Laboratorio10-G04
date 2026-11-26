@@ -91,6 +91,7 @@ def option_two(cont):
         )
 
 def option_three(cont):
+    
     origin = input(
         "Ingrese el BusStopCode o la llave origen (BusStopCode-ServiceNo): "
     ).strip()
@@ -103,14 +104,32 @@ def option_three(cont):
         print("\nNo se encontró una ruta entre las paradas indicadas.")
         return
 
-    route = []
+    print("\n----- OPCIÓN 3 (DFS) -----")
+    print(f"Parada inicial: '{origin}'")
+    print(f"Parada destino: '{destination}'\n")
+    current_bus = None
+    
     while not st.is_empty(path):
-        route.append(st.pop(path))
-
-    print("\nRuta encontrada:")
-    print(" -> ".join(route))
+        vertex = st.pop(path)
+        parts = vertex.split('-')
+        stop_code = parts[0]
+        service_no = parts[1]
+        if current_bus is None:
+            current_bus = service_no
+            print(f"--- Tomar bus '{service_no}' desde '{vertex}' ---")
+            print(stop_code, end="")
+        else:
+            if current_bus != service_no:
+                current_bus = service_no
+                print(" ->")
+                print(f"--- Cambiar a bus '{service_no}' en la parada '{stop_code}' ---")
+                print(stop_code, end="")
+            else:
+                print(f" -> {stop_code}", end="")
+    print("\n")
 
 def option_four(cont):
+    
     if logic.total_stops(cont) == 0:
         print("\nPrimero cargue la información de buses con la opción 1.")
         return
@@ -127,17 +146,67 @@ def option_four(cont):
         print("\nNo se encontró una ruta entre las paradas indicadas.")
         return
 
-    route = []
+    print("\n----- OPCIÓN 4 (BFS) -----")
+    print(f"Parada inicial: '{origin}'")
+    print(f"Parada destino: '{destination}'\n")
+    current_bus = None
+    
     while not st.is_empty(path):
-        route.append(st.pop(path))
-
-    print("\nRuta encontrada:")
-    print(" -> ".join(route))
+        vertex = st.pop(path)
+        parts = vertex.split('-')
+        stop_code = parts[0]
+        service_no = parts[1]
+        if current_bus is None:
+            current_bus = service_no
+            print(f"--- Tomar bus '{service_no}' desde '{vertex}' ---")
+            print(stop_code, end="")
+        else:
+            if current_bus != service_no:
+                current_bus = service_no
+                print(" ->")
+                print(f"--- Cambiar a bus '{service_no}' en la parada '{stop_code}' ---")
+                print(stop_code, end="")
+            else:
+                print(f" -> {stop_code}", end="")
+    print("\n")
 
 def option_five(cont):
-    # TODO: Imprimir los resultados de la opción 5
-    ...
-
+    
+    origin = input(
+        "Ingrese el BusStopCode o la llave origen (BusStopCode-ServiceNo): "
+    ).strip()
+    destination = input(
+        "Ingrese el BusStopCode o la llave destino (BusStopCode-ServiceNo): "
+    ).strip()
+    path = logic.get_shortest_route_between_stops(cont, origin, destination)
+    if path is None:
+        print("\nNo se encontró una ruta entre las paradas indicadas.")
+        return
+    
+    print("\n----- OPCIÓN 5 -----")
+    print(f"Origen: '{origin}'")
+    print(f"Destino: '{destination}'")
+    current_bus = None
+    
+    while not st.is_empty(path):
+        vertex = st.pop(path)
+        parts = vertex.split('-')
+        stop_code = parts[0]
+        service_no = parts[1]
+        if current_bus is None:
+            current_bus = service_no
+            print(f"--- Tomar bus '{service_no}' desde '{vertex}' ---")
+            print(stop_code, end="")
+        else:
+            if current_bus != service_no:
+                current_bus = service_no
+                print(" ->")
+                print(f"--- Cambiar a bus '{service_no}' en la parada '{stop_code}' ---")
+                print(stop_code, end="")
+            else:
+                print(f" -> {stop_code}", end="")
+    print("\n")
+    
 def option_six(cont):
     # (Opcional) TODO: Imprimir los resultados de la opción 6
     ...

@@ -11,7 +11,7 @@ def dfs(my_graph,source):
         Cada vertice alcanzable se agrega a un mapa con su llave y 
         como valor un diccionarion con la informacion {“marked”, “edge_from”}.
     """
-    visited_map = mp.new_map(num_elements=DG.order(my_graph),load_factor=.5)
+    visited_map = mp.new_map(num_elements=max(1, DG.order(my_graph)),load_factor=0.5)
     vertex_start = DG.get_vertex(my_graph["vertices"], source)
     if vertex_start is None:
         raise ValueError("El vertice de inicio no existe en el grafo")
@@ -30,8 +30,7 @@ def dfs_vertex(my_graph,vertex,visited_map):
     for index in range(al.size(neighbors)):
         neighbor_key = al.get_element(neighbors, index)
         if not mp.contains(visited_map, neighbor_key):
-            neighbor_vertex = DG.get_vertex(
-                my_graph["vertices"], neighbor_key)
+            neighbor_vertex = DG.get_vertex(my_graph, neighbor_key)
             if neighbor_vertex is None:
                 raise ValueError(
                     "Una adyacencia apunta a un vertice inexistente")

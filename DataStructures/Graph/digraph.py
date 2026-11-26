@@ -11,7 +11,7 @@ def new_graph(order):
         Crea un grafo dirigido vacío.
     """
     return {
-        "vertices": mp.new_map(order, 0.5),
+        "vertices": mp.new_map(max(1, order), 0.5),
         "num_edges": 0,
     }
 
@@ -20,10 +20,10 @@ def get_vertex(my_graph,key_u):
         Retorna la información completa del vértice con llave key_u
     """
 
-    vertex = mp.get(my_graph,key_u)
-    if vertex is None:
-        return None
-    return vertex
+    vertices_map = my_graph
+    if "vertices" in my_graph:
+        vertices_map = my_graph["vertices"]
+    return mp.get(vertices_map, key_u)
 
 def insert_vertex(my_graph,key_u,info_u):
     """
@@ -79,7 +79,7 @@ def update_vertex_info(my_graph,key_u,new_info_u):
     """
         Actualiza la información de un vértice llave key_u con la nueva info
     """
-    vertex = mp.get(my_graph["vertices"],key_u)
+    vertex = get_vertex(my_graph, key_u)
     if vertex is not None:
 
         vtx.set_value(vertex,new_info_u)
@@ -89,7 +89,7 @@ def degree(my_graph,key_u):
     """
         Retorna el grado de un vértice llave "key_u"
     """
-    vertex = get_vertex(my_graph["vertices"],key_u)
+    vertex = get_vertex(my_graph, key_u)
     if vertex is None:
         raise Exception("El vertice no existe")
 
